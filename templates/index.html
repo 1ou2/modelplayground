@@ -1,189 +1,647 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>LLM Chat Interface</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Chat Interface</title>
     <style>
         body {
             font-family: Arial, sans-serif;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f9f9f9;
+            display: flex;
+        }
+        
+        #sidebar {
+            width: 250px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            padding: 15px;
+            margin-right: 20px;
+            height: calc(100vh - 40px);
+            overflow-y: auto;
+            position: sticky;
+            top: 20px;
+        }
+        
+        #main-content {
+            flex: 1;
             display: flex;
             flex-direction: column;
-            height: 100vh;
-            margin: 0;
+            min-height: calc(100vh - 40px);
         }
-        #conversation {
+        
+        #chat-container {
+            border: 1px solid #ddd;
+            border-radius: 8px;
             flex: 1;
-            padding: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            background-color: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
             overflow-y: auto;
-            background-color: #f0f0f0;
         }
-        .bubble {
-            max-width: 70%;
-            padding: 10px;
-            margin: 5px 0;
-            border-radius: 15px;
-            clear: both;
+        
+        .message {
+            margin-bottom: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            white-space: pre-wrap;
+            line-height: 1.6;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            position: relative;
         }
+        
         .user {
-            background-color: #DCF8C6;
-            align-self: flex-start;
-            margin-left: auto;
+            background-color: #e6f7ff;
+            border-left: 4px solid #1890ff;
+            margin-left: 20%;
         }
-        .bot {
-            background-color: #FFFFFF;
-            align-self: flex-end;
-            margin-right: auto;
+        
+        .assistant {
+            background-color: #f0f0f0;
+            border-left: 4px solid #52c41a;
+            margin-right: 20%;
         }
-        #input-area {
+        
+        .reasoning {
+            background-color: #fff3cd;
+            border-left: 3px solid #ffc107;
+            padding: 15px;
+            margin-bottom: 10px;
+            font-style: italic;
+            white-space: pre-wrap;
+            line-height: 1.6;
+            border-radius: 8px;
+            margin-right: 20%;
+            position: relative;
+        }
+        
+        .copy-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background-color: #f0f0f0;
+            border: none;
+            border-radius: 4px;
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+            opacity: 0.7;
             display: flex;
-            padding: 10px;
-            background: #ddd;
+            align-items: center;
+            justify-content: center;
         }
-        #messageInput {
-            flex: 1;
-            padding: 10px;
+        
+        .copy-btn:hover {
+            opacity: 1;
+            background-color: #e0e0e0;
+        }
+        
+        code {
+            background-color: #f0f0f0;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        
+        strong {
+            font-weight: bold;
+        }
+        
+        em {
+            font-style: italic;
+        }
+        
+        #message-form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            position: sticky;
+            bottom: 0;
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+        }
+        
+        #message-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            resize: vertical;
+            font-family: inherit;
             font-size: 16px;
         }
-        #sendBtn {
-            padding: 10px 20px;
+        
+        button {
+            padding: 12px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
             font-size: 16px;
+            font-weight: bold;
+        }
+        
+        button:hover {
+            background-color: #45a049;
+        }
+        
+        .form-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        
+        #model-selector {
+            margin-bottom: 20px;
+            padding: 10px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+        }
+        
+        #model {
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
             margin-left: 10px;
+            flex-grow: 1;
+        }
+        
+        .conversation-item {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .conversation-item:hover {
+            background-color: #f5f5f5;
+        }
+        
+        .conversation-title {
+            font-weight: bold;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            flex-grow: 1;
+        }
+        
+        .conversation-date {
+            font-size: 12px;
+            color: #888;
+            margin-top: 5px;
+        }
+        
+        .edit-title-btn {
+            background: none;
+            border: none;
+            color: #1890ff;
+            cursor: pointer;
+            padding: 5px;
+            font-size: 14px;
+            margin-left: 5px;
+        }
+        
+        .edit-title-btn:hover {
+            background-color: #f0f0f0;
+            border-radius: 4px;
+        }
+        
+        .new-conversation-btn {
+            width: 100%;
+            margin-bottom: 15px;
+        }
+        
+        .sidebar-title {
+            font-size: 18px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
         }
     </style>
 </head>
 <body>
-    <div>
-        <label for="modelSelect">Select Model:</label>
-        <select id="modelSelect"></select>
+    <div id="sidebar">
+        <h2 class="sidebar-title">Conversations</h2>
+        <button id="new-conversation-btn" class="new-conversation-btn">New Conversation</button>
+        <div id="conversation-list"></div>
     </div>
-    <div id="conversation"></div>
-    <div id="input-area">
-        <textarea id="messageInput" rows="3" placeholder="Type your message..."></textarea>
-        <button id="sendBtn" onclick="sendMessage()">Send</button>
+    
+    <div id="main-content">
+        <h1 id="conversation-title">AI Chat Interface</h1>
+        
+        <div id="model-selector">
+            <label for="model">Select Model:</label>
+            <select id="model">
+                <option value="deepseek">DeepSeek</option>
+                <option value="claude">Claude</option>
+                <option value="mistral">Mistral</option>
+            </select>
+        </div>
+        
+        <div id="chat-container"></div>
+        
+        <form id="message-form">
+            <textarea id="message-input" placeholder="Type your message..." rows="3" required></textarea>
+            <div class="form-buttons">
+                <button type="submit">Send</button>
+            </div>
+        </form>
     </div>
-
-
 
     <script>
-        let conversationId = Date.now().toString();
-        let currentModel = '';
+        // DOM elements
+        const chatContainer = document.getElementById('chat-container');
+        const messageForm = document.getElementById('message-form');
+        const messageInput = document.getElementById('message-input');
+        const modelSelector = document.getElementById('model');
+        const conversationList = document.getElementById('conversation-list');
+        const newConversationBtn = document.getElementById('new-conversation-btn');
+        const conversationTitle = document.getElementById('conversation-title');
+        
+        // Current conversation state
+        let currentConversationId = null;
         let conversations = {};
-
-        const messageInput = document.getElementById('messageInput');
-
-        messageInput.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') {
-                if (e.altKey) {
-                    // Insert newline at cursor position
-                    e.preventDefault();
-                    const start = this.selectionStart;
-                    const end = this.selectionEnd;
-                    this.value = this.value.substring(0, start) + '\n' + this.value.substring(end);
-                    this.selectionStart = this.selectionEnd = start + 1;
-                } else if (e.shiftKey) {
-                    // Allow Shift+Enter to insert newline
-                    // Do nothing, default behavior
-                } else {
-                    // Send message on Enter
-                    e.preventDefault();
-                    sendMessage();
-                }
-            }
-        });
-
-
-        // Load models and conversation
-        async function loadModels() {
-            const res = await fetch('/settings');
-            const settings = await res.json();
-            currentModel = settings.model;
-
-            // Fetch model keys
-            const modelRes = await fetch('/model_keys');
-            const modelKeys = await modelRes.json();
-
-            const select = document.getElementById('modelSelect');
-            select.innerHTML = '';
-            for (const model of Object.keys(modelKeys)) {
-                const option = document.createElement('option');
-                option.value = model;
-                option.text = model;
-                if (model === currentModel) {
-                    option.selected = true;
-                }
-                select.appendChild(option);
-            }
-
-            select.onchange = () => {
-                currentModel = select.value;
-                saveModelSetting();
-                // Reset conversation if needed
-                conversationId = Date.now().toString();
-                conversations[conversationId] = [];
-                displayConversation();
+        
+        // Initialize a new conversation
+        function startNewConversation() {
+            // Generate a random conversation ID
+            currentConversationId = Math.random().toString(36).substring(2, 15);
+            
+            // Clear the chat container
+            chatContainer.innerHTML = '';
+            
+            // Update the title
+            conversationTitle.textContent = 'New Conversation';
+            
+            // Enable editing of the title
+            makeConversationTitleEditable();
+            
+            // Load conversations after creating a new one
+            loadConversations();
+        }
+        
+        // Make the conversation title editable
+        function makeConversationTitleEditable() {
+            conversationTitle.onclick = function() {
+                const currentTitle = this.textContent;
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.value = currentTitle;
+                input.style.fontSize = '24px';
+                input.style.width = '100%';
+                input.style.padding = '5px';
+                input.style.border = '1px solid #ddd';
+                input.style.borderRadius = '4px';
+                
+                this.textContent = '';
+                this.appendChild(input);
+                input.focus();
+                
+                input.onblur = function() {
+                    const newTitle = this.value.trim() || 'Untitled Conversation';
+                    conversationTitle.textContent = newTitle;
+                    
+                    // Save the new title to the server
+                    if (currentConversationId) {
+                        updateConversationTitle(currentConversationId, newTitle);
+                    }
+                };
+                
+                input.onkeydown = function(e) {
+                    if (e.key === 'Enter') {
+                        this.blur();
+                    }
+                };
             };
         }
-
-        async function saveModelSetting() {
-            await fetch('/settings', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({model: currentModel})
-            });
-        }
-
-        async function sendMessage() {
-            const input = document.getElementById('messageInput');
-            const message = input.value.trim();
-            if (!message) return;
-
-            if (!conversations[conversationId]) {
-                conversations[conversationId] = [];
+        
+        // Update conversation title on the server
+        async function updateConversationTitle(conversationId, newTitle) {
+            try {
+                await fetch(`/conversations/${conversationId}/title`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        title: newTitle
+                    })
+                });
+            } catch (error) {
+                console.error('Error updating conversation title:', error);
             }
-
-            // Add user message
-            conversations[conversationId].push({role: 'user', content: message});
-            displayConversation();
-
-            // Send to backend
-            const res = await fetch('/send', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({
-                    conversation_id: conversationId,
-                    message: message,
-                    model: currentModel
-                })
-            });
-            const data = await res.json();
-
-            // Add bot response
-            conversations[conversationId].push({role: 'assistant', content: data.response});
-            displayConversation();
-
-            input.value = '';
         }
-
-        function displayConversation() {
-            const container = document.getElementById('conversation');
-            container.innerHTML = '';
-
-            if (!conversations[conversationId]) return;
-
-            conversations[conversationId].forEach(entry => {
-                const bubble = document.createElement('div');
-                bubble.className = 'bubble ' + (entry.role === 'user' ? 'user' : 'bot');
-                bubble.innerText = entry.content;
-                container.appendChild(bubble);
-            });
-
-            // Scroll to bottom
-            container.scrollTop = container.scrollHeight;
+        
+        // Delete a conversation from the server
+        async function deleteConversation(conversationId) {
+            try {
+                const response = await fetch(`/conversations/${conversationId}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    // If the deleted conversation was the current one, start a new conversation
+                    if (conversationId === currentConversationId) {
+                        startNewConversation();
+                    }
+                    
+                    // Refresh the conversation list
+                    loadConversations();
+                } else {
+                    console.error('Failed to delete conversation');
+                }
+            } catch (error) {
+                console.error('Error deleting conversation:', error);
+            }
         }
-
-        // Initialize
-        window.onload = () => {
+        
+        // Load all conversations from the server
+        async function loadConversations() {
+            try {
+                const response = await fetch('/conversations');
+                conversations = await response.json();
+                
+                // Clear the conversation list
+                conversationList.innerHTML = '';
+                
+                // Add each conversation to the list
+                Object.entries(conversations).forEach(([id, metadata]) => {
+                    const conversationItem = document.createElement('div');
+                    conversationItem.className = 'conversation-item';
+                    conversationItem.dataset.id = id;
+                    
+                    const titleSpan = document.createElement('span');
+                    titleSpan.className = 'conversation-title';
+                    titleSpan.textContent = metadata.title;
+                    
+                    const dateSpan = document.createElement('div');
+                    dateSpan.className = 'conversation-date';
+                    dateSpan.textContent = metadata.updated_at;
+                    
+                    const editBtn = document.createElement('button');
+                    editBtn.className = 'edit-title-btn';
+                    editBtn.innerHTML = '✏️';
+                    editBtn.title = 'Edit title';
+                    editBtn.onclick = function(e) {
+                        e.stopPropagation();
+                        const newTitle = prompt('Enter new title:', metadata.title);
+                        if (newTitle && newTitle.trim()) {
+                            updateConversationTitle(id, newTitle.trim());
+                            titleSpan.textContent = newTitle.trim();
+                        }
+                    };
+                    
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.className = 'edit-title-btn';
+                    deleteBtn.innerHTML = '🗑️';
+                    deleteBtn.title = 'Delete conversation';
+                    deleteBtn.onclick = function(e) {
+                        e.stopPropagation();
+                        if (confirm('Are you sure you want to delete this conversation?')) {
+                            deleteConversation(id);
+                        }
+                    };
+                    
+                    const contentDiv = document.createElement('div');
+                    contentDiv.appendChild(titleSpan);
+                    contentDiv.appendChild(dateSpan);
+                    
+                    const buttonsDiv = document.createElement('div');
+                    buttonsDiv.style.display = 'flex';
+                    buttonsDiv.appendChild(editBtn);
+                    buttonsDiv.appendChild(deleteBtn);
+                    
+                    conversationItem.appendChild(contentDiv);
+                    conversationItem.appendChild(buttonsDiv);
+                    
+                    // Add click event to load the conversation
+                    conversationItem.addEventListener('click', () => loadConversation(id));
+                    
+                    conversationList.appendChild(conversationItem);
+                });
+            } catch (error) {
+                console.error('Error loading conversations:', error);
+            }
+        }
+        
+        // Load a specific conversation
+        async function loadConversation(conversationId) {
+            try {
+                const response = await fetch(`/conversations/${conversationId}`);
+                const data = await response.json();
+                
+                // Set the current conversation ID
+                currentConversationId = conversationId;
+                
+                // Update the title
+                conversationTitle.textContent = data.metadata.title || 'Untitled Conversation';
+                
+                // Clear the chat container
+                chatContainer.innerHTML = '';
+                
+                // Add each message to the chat
+                data.messages.forEach(message => {
+                    addMessage(message.role, message.content);
+                });
+                
+                // Make the title editable
+                makeConversationTitleEditable();
+                
+                // Set the model selector
+                if (data.metadata.model) {
+                    modelSelector.value = data.metadata.model;
+                }
+            } catch (error) {
+                console.error('Error loading conversation:', error);
+            }
+        }
+        
+        // Add a message to the chat
+        function addMessage(role, content) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${role}`;
+            
+            // Format the content with proper line breaks and markdown-like formatting
+            const formattedContent = formatContent(content);
+            messageDiv.innerHTML = formattedContent;
+            
+            // Add copy button
+            const copyBtn = document.createElement('button');
+            copyBtn.className = 'copy-btn';
+            copyBtn.innerHTML = '📋';
+            copyBtn.title = 'Copy to clipboard';
+            copyBtn.onclick = function() {
+                navigator.clipboard.writeText(content).then(() => {
+                    // Show a brief "Copied!" message
+                    const originalText = this.innerHTML;
+                    this.innerHTML = '✓';
+                    setTimeout(() => {
+                        this.innerHTML = originalText;
+                    }, 1000);
+                });
+            };
+            
+            messageDiv.appendChild(copyBtn);
+            chatContainer.appendChild(messageDiv);
+            
+            // Scroll to bottom of the page
+            window.scrollTo(0, document.body.scrollHeight);
+        }
+        
+        // Format content with markdown-like syntax
+        function formatContent(content) {
+            if (!content) return '';
+            
+            // Replace newlines with HTML line breaks
+            let formatted = content.replace(/\n/g, '<br>');
+            
+            // Simple markdown-like formatting
+            // Bold: **text** -> <strong>text</strong>
+            formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            
+            // Italic: *text* -> <em>text</em>
+            formatted = formatted.replace(/\*(.*?)\*/g, '<em>$1</em>');
+            
+            // Code: `text` -> <code>text</code>
+            formatted = formatted.replace(/`(.*?)`/g, '<code>$1</code>');
+            
+            return formatted;
+        }
+        
+        // Send a message
+        async function sendMessage(message) {
+            if (!message.trim()) return;
+            
+            // Add user message to chat
+            addMessage('user', message);
+            
+            // Show loading indicator
+            const loadingDiv = document.createElement('div');
+            loadingDiv.className = 'message assistant';
+            loadingDiv.textContent = 'Thinking...';
+            chatContainer.appendChild(loadingDiv);
+            
+            try {
+                // Send message to server
+                const response = await fetch('/send', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        conversation_id: currentConversationId,
+                        message: message,
+                        model: modelSelector.value
+                    })
+                });
+                
+                const data = await response.json();
+                
+                // Update conversation ID if it changed
+                if (data.conversation_id) {
+                    currentConversationId = data.conversation_id;
+                }
+                
+                // Remove loading indicator
+                chatContainer.removeChild(loadingDiv);
+                
+                // Add reasoning if available
+                if (data.has_reasoning) {
+                    const reasoningDiv = document.createElement('div');
+                    reasoningDiv.className = 'reasoning';
+                    
+                    // Format the reasoning with proper line breaks
+                    const formattedReasoning = formatContent('Reasoning:\n' + data.reasoning);
+                    reasoningDiv.innerHTML = formattedReasoning;
+                    
+                    // Add copy button for reasoning
+                    const copyBtn = document.createElement('button');
+                    copyBtn.className = 'copy-btn';
+                    copyBtn.innerHTML = '📋';
+                    copyBtn.title = 'Copy to clipboard';
+                    copyBtn.onclick = function() {
+                        navigator.clipboard.writeText(data.reasoning).then(() => {
+                            const originalText = this.innerHTML;
+                            this.innerHTML = '✓';
+                            setTimeout(() => {
+                                this.innerHTML = originalText;
+                            }, 1000);
+                        });
+                    };
+                    
+                    reasoningDiv.appendChild(copyBtn);
+                    chatContainer.appendChild(reasoningDiv);
+                }
+                
+                // Add assistant response to chat
+                addMessage('assistant', data.response);
+                
+                // Refresh the conversation list
+                loadConversations();
+            } catch (error) {
+                // Remove loading indicator
+                chatContainer.removeChild(loadingDiv);
+                
+                // Show error message
+                addMessage('assistant', 'Error: Could not get response');
+                console.error('Error:', error);
+            }
+        }
+        
+        // Event listeners
+        messageForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const message = messageInput.value.trim();
+            messageInput.value = '';
+            sendMessage(message);
+        });
+        
+        newConversationBtn.addEventListener('click', startNewConversation);
+        
+        // Load available models
+        async function loadModels() {
+            try {
+                const response = await fetch('/models');
+                const data = await response.json();
+                
+                // Populate model selector
+                modelSelector.innerHTML = '';
+                data.available_models.forEach(model => {
+                    const option = document.createElement('option');
+                    option.value = model;
+                    option.textContent = model.charAt(0).toUpperCase() + model.slice(1);
+                    if (model === data.default_model) {
+                        option.selected = true;
+                    }
+                    modelSelector.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error loading models:', error);
+            }
+        }
+        
+        // Initialize the app
+        function init() {
             loadModels();
-        };
+            loadConversations();
+            startNewConversation();
+        }
+        
+        // Start the app when the page loads
+        window.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
 </html>

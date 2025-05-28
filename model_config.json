@@ -1,0 +1,10 @@
+{
+  "available_models": ["deepseek", "claude", "mistral"],
+  "default_model": "deepseek",
+  "region": "us-east-1",
+  "model_ids": {
+    "deepseek": "us.deepseek.r1-v1:0",
+    "claude": "anthropic.claude-3-haiku-20240307-v1:0",
+    "mistral": "mistral.mistral-large-2402-v1:0"
+  }
+}
